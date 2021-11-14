@@ -7,7 +7,7 @@ import './BondNft.sol';
 
 contract Escrow is Ownable {
 
-  enum Status { LOCKED, READY_TO_CLAIM, CLAIMED }
+  enum Status { LOCKED, CLAIMED }
 
   struct Bonds {
     uint256 tokenId;
@@ -70,11 +70,13 @@ contract Escrow is Ownable {
   }
 
   function claimBond(uint tokenId) public isReleased(tokenId) isOwner(tokenId) returns (bool) {
-    Bonds memory bond = bearerBonds[tokenId];
+    Bonds storage bond = bearerBonds[tokenId];
     IERC20 erc20Token = IERC20(bond.erc20);
+    require(bond.status != Status.CLAIMED, "already claimed");
 
     nftBond.burn(tokenId);
     erc20Token.transfer(msg.sender, bond.amount);
+    bond.status = Status.CLAIMED;
 
     return true;
   }
